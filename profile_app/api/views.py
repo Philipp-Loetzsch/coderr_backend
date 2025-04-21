@@ -2,7 +2,7 @@ from rest_framework import viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from ..models import UserProfile, ProfileType
-from .serializers import ( ProfileBusinessListSerializer, ProfileCustomerListSerializer, CurrentUserProfileSerializer,)
+from .serializers import  ProfileBusinessListSerializer, ProfileCustomerListSerializer, CurrentUserProfileSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
 class IsAdminOrForbiddenMessage(IsAdminUser):

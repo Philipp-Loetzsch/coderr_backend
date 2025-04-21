@@ -27,7 +27,6 @@ class OfferDetailSerializer(serializers.ModelSerializer):
         ]
 
 
-
 class OfferSerializer(serializers.ModelSerializer):
     user_details = UserDetailsSerializer(source='user', read_only=True)
     url = serializers.HyperlinkedIdentityField(
