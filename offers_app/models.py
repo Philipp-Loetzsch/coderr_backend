@@ -34,7 +34,7 @@ class Offer(models.Model):
         blank=True
     )
     description = models.TextField(blank=True)
-    created_at = models.DateTimeFeld(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     min_price = models.DecimalField(
         max_digits=10,
@@ -57,4 +57,4 @@ class Offer(models.Model):
         return f"'{self.title}' von {self.user.username}"
 
     class Meta:
-        ordering = ['-created_at'] # Neueste Angebote zuerst anzeigen
+        ordering = ['-created_at'] 
