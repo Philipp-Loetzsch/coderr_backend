@@ -1,60 +1,54 @@
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, mixins, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from ..models import UserProfile, ProfileType
-from .serializers import  ProfileBusinessListSerializer, ProfileCustomerListSerializer, CurrentUserProfileSerializer
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from .serializers import UserProfileSerializer
+from .permissions import IsProfileOwner
 
-class IsAdminOrForbiddenMessage(IsAdminUser):
-     # Überschreibe die Standard-Nachricht
-     message = 'Aktion fehlgeschlagen: Nur Administratoren haben hier Zugriff.'
 
-class ProfileViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = UserProfile.objects.all()
-    permission_classes = [AllowAny]
+class ProfilePagination(PageNumberPagination):
+    page_size = 10 
+    page_size_query_param = 'page_size' 
+    max_page_size = 50 
 
-    def get_serializer_class(self):
-        if self.action == 'list_business':
-            return ProfileBusinessListSerializer
-        elif self.action == 'list_customer':
-            return ProfileCustomerListSerializer
-        elif self.action == 'retrieve':
-            return CurrentUserProfileSerializer 
-        return CurrentUserProfileSerializer
-    
+class UserProfileViewSet(mixins.RetrieveModelMixin, 
+                         mixins.UpdateModelMixin, 
+                         viewsets.GenericViewSet):
+    """
+    ViewSet für UserProfile: Abrufen, eigenes Aktualisieren, Listen nach Typ.
+    Kein Standard 'list' oder 'create' Endpunkt.
+    """
+    queryset = UserProfile.objects.select_related('user').all()
+    serializer_class = UserProfileSerializer
+    pagination_class = ProfilePagination
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'pk'
+
     def get_permissions(self):
-        """
-        Setzt Berechtigungen dynamisch basierend auf der Aktion.
-        Beschränkt die Standard 'list'-Aktion auf Admin-Benutzer.
-        """
-        if self.action == 'list':
-            self.permission_classes = [IsAdminOrForbiddenMessage]
+        """ Setzt zusätzliche Objekt-Berechtigung für Update/Patch. """
+        if self.action in ['update', 'partial_update']:
+            return [permissions.IsAuthenticated(), IsProfileOwner()]
         return super().get_permissions()
 
     @action(detail=False, methods=['get'], url_path='business')
     def list_business(self, request):
-        list_business = UserProfile.objects.filter(profile_type=ProfileType.BUSINESS)
-        page = self.paginate_queryset(list_business)
+        """ GET /api/profile/business/ - Gibt paginierte Liste der Business-Profile zurück. """
+        queryset = self.get_queryset().filter(profile_type=ProfileType.BUSINESS)
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(list_business, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='customer')
     def list_customer(self, request):
-        list_customer = UserProfile.objects.filter(profile_type=ProfileType.CUSTOMER)
-        page = self.paginate_queryset(list_customer)
+        """ GET /api/profile/customer/ - Gibt paginierte Liste der Customer-Profile zurück. """
+        queryset = self.get_queryset().filter(profile_type=ProfileType.CUSTOMER)
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(list_customer, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-
-class CurrentUserProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = CurrentUserProfileSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user.user_profile

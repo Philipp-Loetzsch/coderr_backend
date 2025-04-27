@@ -8,19 +8,7 @@ class OfferDetailType(models.TextChoices):
     PREMIUM = 'premium', 'Premium'
     # Füge weitere hinzu, falls nötig
 
-class OfferDetail(models.Model):
-    """
-    Repräsentiert ein spezifisches Leistungspaket oder Detail eines Angebots.
-    """
-    title = models.CharField(max_length=100) 
-    revisions = models.PositiveIntegerField(default=0, help_text="Anzahl der erlaubten Revisionen")
-    delivery_time_in_days = models.PositiveIntegerField(default=1, help_text="Lieferzeit in Tagen")
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    features = models.JSONField(default=list, help_text="Liste der enthaltenen Features (Strings)")
-    offer_type = models.CharField(max_length=20, choices=OfferDetailType.choices)
 
-    def __str__(self):
-        return f"{self.title} ({self.offer_type})"
 
 class Offer(models.Model):
     """
@@ -47,14 +35,35 @@ class Offer(models.Model):
         blank=True,
         help_text="Minimale Lieferzeit in Tagen"
     )
-    details = models.ManyToManyField(
-        OfferDetail,
-        blank=True, 
-        related_name='offers'
-        )
+    # details = models.ManyToManyField(
+    #     OfferDetail,
+    #     blank=True, 
+    #     related_name='offers'
+    #     )
 
     def __str__(self):
         return f"'{self.title}' von {self.user.username}"
 
     class Meta:
         ordering = ['-created_at'] 
+        
+        
+class OfferDetail(models.Model):
+    """
+    Repräsentiert ein spezifisches Leistungspaket oder Detail eines Angebots.
+    """
+    
+    offer = models.ForeignKey(Offer,
+        on_delete=models.CASCADE, # <-- Sorgt für automatisches Löschen!
+        related_name='details',     # Zugriff auf Details über offer.details.all()
+        null=True
+    )
+    title = models.CharField(max_length=100) 
+    revisions = models.PositiveIntegerField(default=0, help_text="Anzahl der erlaubten Revisionen")
+    delivery_time_in_days = models.PositiveIntegerField(default=1, help_text="Lieferzeit in Tagen")
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    features = models.JSONField(default=list, help_text="Liste der enthaltenen Features (Strings)")
+    offer_type = models.CharField(max_length=20, choices=OfferDetailType.choices)
+
+    def __str__(self):
+        return f"{self.offer_id} for offer {self.title} ({self.offer_type})"

@@ -1,84 +1,37 @@
 from rest_framework import serializers
-from ..models import UserProfile
+from ..models import UserProfile, ProfileType
 
-class ProfileBusinessListSerializer(serializers.ModelSerializer):
+
+class UserProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer für die Listenansicht von Business-Profilen (/profiles/business/).
+    Serializer für das UserProfile-Modell.
+    Wird für Detailansicht, Listen und Updates verwendet.
+    Blendet 'working_hours' für Customer aus.
     """
-    
-    file = serializers.ImageField(source='profile_picture', read_only=True, required=False)
+    username = serializers.CharField(source='user.username', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True, use_url=True) 
+    location = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    tel = serializers.CharField(required=False, allow_blank=True, max_length=50)
+    description = serializers.CharField(required=False, allow_blank=True, style={'base_template': 'textarea.html'})
+    working_hours = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=50)
     type = serializers.CharField(source='profile_type', read_only=True)
 
     class Meta:
         model = UserProfile
         fields = [
-            'user',          
-            'username',      
-            'first_name',    
-            'last_name',   
-            'file',          
-            'location',      
-            'tel',          
-            'description',   
-            'working_hours', 
-            'type',          
+            'user',
+            'username', 'first_name', 'last_name', 'email',
+            'profile_picture', 'location', 'tel', 'description',
+            'working_hours', 'type',
         ]
-        read_only_fields = [ 
-            'user', 'username', 'first_name', 'last_name', 'type',
-        ]
+        read_only_fields = ['user', 'username', 'first_name', 'last_name', 'email']
 
-
-class ProfileCustomerListSerializer(serializers.ModelSerializer):
-    """
-    Serializer für die Listenansicht von Customer-Profilen (/profiles/customer/).
-    """
-    
-    file = serializers.ImageField(source='profile_picture', read_only=True, required=False)
-    uploaded_at = serializers.DateTimeField(source='created_at', read_only=True, format="%Y-%m-%dT%H:%M:%S")
-    type = serializers.CharField(source='profile_type', read_only=True)
-
-    class Meta:
-        model = UserProfile
-        fields = [
-            'user',       
-            'username',     
-            'first_name',   
-            'last_name',    
-            'file',         
-            'uploaded_at',   
-            'type',          
-        ]
-        read_only_fields = [
-            'user', 'username', 'first_name', 'last_name', 'uploaded_at', 'type',
-        ]
-
-
-class CurrentUserProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer für die Detailansicht und zum Aktualisieren
-    des Profils des aktuell eingeloggten Benutzers (/profile/).
-    """
-    
-    username = serializers.CharField(read_only=True)    
-    file = serializers.ImageField(source='profile_picture', required=False)
-    type = serializers.CharField(source='profile_type', read_only=True)
-
-    class Meta:
-        model = UserProfile
-        fields = [
-            'user',          
-            'username',      
-            'email',         
-            'first_name',   
-            'last_name',    
-            'file',          
-            'location',      
-            'tel',           
-            'description',   
-            'working_hours',  
-            'type',         
-            'created_at',     
-        ]
-        read_only_fields = [
-            'user', 'created_at', 'type', 'username'
-        ]
+    def to_representation(self, instance):
+        """ Passt die Ausgabe an: Entfernt 'working_hours' für Customer. """
+        representation = super().to_representation(instance)
+        if instance.profile_type == ProfileType.CUSTOMER:
+            representation.pop('working_hours', None)
+        return representation
