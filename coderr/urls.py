@@ -22,7 +22,8 @@ from django.conf.urls.static import static
 api_urlpatterns = [
     path('', include('profile_app.api.urls')),
     path('', include('user_auth_app.api.urls')),
-    path('', include('offers_app.api.urls'))
+    path('', include('offers_app.api.urls')),
+    path('', include('orders_app.api.urls'))
 ]
 
 urlpatterns = [
