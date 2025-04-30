@@ -1,48 +1,47 @@
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-class ProfileType(models.TextChoices):
-    BUSINESS = 'business', 'business'
-    CUSTOMER = 'customer', 'customer'
-
-class UserProfile(models.Model):
+class Profile(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
+        settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
-        related_name="user_profile",
-        primary_key=True,
+        related_name='profile',
+        verbose_name=_("User")
     )
     profile_picture = models.ImageField(
-        upload_to='img/profile/',
-        blank=True,
-        null=True
+        _("Profile Picture"),
+        upload_to='profile_pics/',
+        null=True,
+        blank=True
     )
-    location = models.CharField(max_length=255, blank=True)
-    tel = models.CharField(max_length=50, blank=True)
-    description = models.TextField(blank=True)
-    working_hours = models.CharField(max_length=50, blank=True)
-    profile_type = models.CharField(
-        max_length=20,
-        choices=ProfileType.choices,
-    )
-    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    location = models.CharField(_("Location"), max_length=100, null=True, blank=True)
+    description = models.TextField(_("Description"), null=True, blank=True)
+    working_hours = models.CharField(_("Working Hours"), max_length=100, null=True, blank=True)
+    tel = models.CharField(_("Telephone"), max_length=20, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Profile for {self.user.username}"
+        return f"Profile of {self.user.username}"
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Erstellt automatisch ein Profil, wenn ein neuer Benutzer erstellt wird.
+    """
+    if created:
+        Profile.objects.create(user=instance)
 
-    @property
-    def username(self):
-        return self.user.username
-
-    @property
-    def first_name(self):
-        return self.user.first_name
-
-    @property
-    def last_name(self):
-        return self.user.last_name
-
-    @property
-    def email(self):
-        return self.user.email
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_profile(sender, instance, **kwargs):
+    """
+    Speichert das Profil, wenn der Benutzer gespeichert wird
+    (falls das Profil-Modell direkt User-Felder bearbeiten könnte -
+     aktuell nicht der Fall, aber schadet nicht).
+    Stellt sicher, dass das Profil existiert.
+    """
+    try:
+        instance.profile.save()
+    except Profile.DoesNotExist:
+        Profile.objects.create(user=instance)

@@ -1,13 +1,14 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
+from .views import (
+    OfferListCreateView,
+    OfferRetrieveUpdateDestroyView,
+    OfferDetailSpecificView
+)
 
-from . import views
+app_name = 'offers_api'
 
-app_name = 'offers_app'
-router = DefaultRouter()
-router.register(r'offers', views.OfferViewSet, basename='offer')
-router.register(r'offerdetails', views.OfferDetailViewSet, basename='offerdetail')
 urlpatterns = [
-    path('', include(router.urls)),
+    path('offers/', OfferListCreateView.as_view(), name='offer-list-create'),
+    path('offers/<int:id>/', OfferRetrieveUpdateDestroyView.as_view(), name='offer-detail'),
+    path('offerdetails/<int:id>/', OfferDetailSpecificView.as_view(), name='offerdetail-detail'),
 ]
-

@@ -1,19 +1,14 @@
-# profil_app/urls.py
-
 from django.urls import path
-# Passe View-Import an
-from . import views
+from .views import (
+    ProfileDetailView,
+    CustomerProfileListView,
+    BusinessProfileListView
+)
 
-app_name = 'profil_app'
+app_name = 'profile_api'
 
 urlpatterns = [
-    path('profiles/business/',
-         views.UserProfileViewSet.as_view({'get': 'list_business'}),
-         name='profile-list-business'),
-    path('profiles/customer/',
-         views.UserProfileViewSet.as_view({'get': 'list_customer'}),
-         name='profile-list-customer'),
-    path('profile/<int:pk>/',
-         views.UserProfileViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'}),
-         name='profile-detail'), 
+    path('profile/<int:pk>/', ProfileDetailView.as_view(), name='profile-detail'),
+    path('profiles/customer/', CustomerProfileListView.as_view(), name='customer-profile-list'),
+    path('profiles/business/', BusinessProfileListView.as_view(), name='business-profile-list'),
 ]

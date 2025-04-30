@@ -32,6 +32,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,13 +46,16 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
+    'user_auth_app',
     'profile_app',
     'offers_app',
     'orders_app',
     'reviews_app',
-    'base_info_app',
-    'user_auth_app'
+    'base_info_app'
+    
 ]
+
+AUTH_USER_MODEL = 'user_auth_app.CustomUser'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -167,3 +171,4 @@ REST_FRAMEWORK = {
           'django_filters.rest_framework.DjangoFilterBackend'
      ]
 }   
+

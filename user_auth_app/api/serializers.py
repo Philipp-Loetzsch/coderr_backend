@@ -1,81 +1,71 @@
-
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
-from profile_app.models import UserProfile, ProfileType
-from django.db import transaction
+from rest_framework.authtoken.models import Token
 
-User = get_user_model() 
+CustomUser = get_user_model()
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """
     Serializer für die Benutzerregistrierung.
-    Validiert Eingaben und erstellt User + zugehöriges Profil.
+    Erstellt einen Benutzer und gibt einen Token zurück.
     """
-    repeated_password = serializers.CharField(
-        style={'input_type': 'password'},
-        write_only=True,
-        required=True
-    )
-    type = serializers.ChoiceField(
-        choices=ProfileType.choices,
-        write_only=True,
-        required=True
-    )
+    token = serializers.SerializerMethodField(read_only=True)
+    user_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'repeated_password', 'type']
+        model = CustomUser
+        fields = ('user_id', 'username', 'email', 'password', 'type', 'token')
         extra_kwargs = {
-            'password': {'write_only': True, 'style': {'input_type': 'password'}}
+            'password': {'write_only': True, 'style': {'input_type': 'password'}},
+            'email': {'required': True, 'allow_blank': False},
+            'type': {'required': True}
         }
 
-    def validate(self, data):
-        """
-        Zusätzliche Validierungen: Passwort-Match, Passwort-Stärke, E-Mail/Username-Eindeutigkeit.
-        """
-        if data['password'] != data['repeated_password']:
-            raise serializers.ValidationError({"password": "Passwörter stimmen nicht überein."})
+    def get_token(self, user):
+        token, created = Token.objects.get_or_create(user=user)
+        return token.key
 
-        try:
-            validate_password(data['password'], user=None)
-        except ValidationError as e:
-            raise serializers.ValidationError({'password': list(e.messages)})
-
-        if User.objects.filter(email=data['email']).exists():
-            raise serializers.ValidationError({"email": "Ein Benutzer mit dieser E-Mail existiert bereits."})
-
-        if User.objects.filter(username=data['username']).exists():
-             raise serializers.ValidationError({"username": "Ein Benutzer mit diesem Benutzernamen existiert bereits."})
-
-        return data
+    def get_user_id(self, user):
+        return user.id
 
     def create(self, validated_data):
-        validated_data.pop('repeated_password')
-        profile_type = validated_data.pop('type')
-        user = None
-
-        try:
-            with transaction.atomic(): 
-                user = User.objects.create_user(**validated_data)
-                UserProfile.objects.create(user=user, profile_type=profile_type)
-
-        except Exception as e:
-            print(f"FEHLER bei Registrierung (Rollback durchgeführt): {e}")
-            raise serializers.ValidationError(f"Registrierung fehlgeschlagen: {e}")
-       
+        user = CustomUser.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            type=validated_data['type']
+        )
         return user
-
 
 class LoginSerializer(serializers.Serializer):
     """
-    Serializer für den User-Login. Nimmt Username/Passwort entgegen.
-    Die eigentliche Authentifizierung findet in der View statt.
+    Serializer für den Benutzer-Login.
+    Authentifiziert Benutzer und gibt Token, Username und User-ID zurück.
     """
     username = serializers.CharField(required=True)
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        style={'input_type': 'password'}
-    )
+    password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
+    token = serializers.CharField(read_only=True)
+    user_id = serializers.IntegerField(read_only=True)
+
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
+
+        if username and password:
+            user = authenticate(request=self.context.get('request'), username=username, password=password)
+            if not user:
+                msg = 'Unable to log in with provided credentials.'
+                raise serializers.ValidationError(msg, code='authorization')
+        else:
+            msg = 'Must include "username" and "password".'
+            raise serializers.ValidationError(msg, code='authorization')
+
+        token, created = Token.objects.get_or_create(user=user)
+        data['user'] = user
+        data['token'] = token.key
+        data['user_id'] = user.id
+        return data
+class UserDetailsSerializer(serializers.ModelSerializer):
+     class Meta:
+        model = CustomUser
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'type')

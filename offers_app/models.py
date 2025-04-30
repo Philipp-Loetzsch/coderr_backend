@@ -1,69 +1,68 @@
 # offers_app/models.py
 from django.db import models
-from django.conf import settings # Für den User Foreign Key
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
-class OfferDetailType(models.TextChoices):
-    BASIC = 'basic', 'Basic'
-    STANDARD = 'standard', 'Standard'
-    PREMIUM = 'premium', 'Premium'
-    # Füge weitere hinzu, falls nötig
-
-
+class Category(models.Model):
+    name = models.CharField(_("Name"), max_length=100, unique=True)
+    class Meta:
+        verbose_name = _("Category")
+        verbose_name_plural = _("Categories")
+    def __str__(self):
+        return self.name
 
 class Offer(models.Model):
-    """
-    Repräsentiert ein Angebot eines Benutzers.
-    """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='offers')
-    title = models.CharField(max_length=200)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='offers',
+        verbose_name=_("User"),
+        limit_choices_to={'type': 'business'}
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='offers',
+        verbose_name=_("Category")
+    )
+    title = models.CharField(_("Title"), max_length=200)
+    description = models.TextField(_("Description"), blank=True)
     image = models.ImageField(
-        upload_to='img/offers/',
-        null=True,              
+        _("Image"),
+        upload_to='offer_images/',
+        null=True,
         blank=True
     )
-    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    min_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True, 
-        blank=True
-    )
-    min_delivery_time = models.PositiveIntegerField(
-        null=True, 
-        blank=True,
-        help_text="Minimale Lieferzeit in Tagen"
-    )
-    # details = models.ManyToManyField(
-    #     OfferDetail,
-    #     blank=True, 
-    #     related_name='offers'
-    #     )
-
     def __str__(self):
-        return f"'{self.title}' von {self.user.username}"
+        return self.title
 
-    class Meta:
-        ordering = ['-created_at'] 
-        
-        
 class OfferDetail(models.Model):
-    """
-    Repräsentiert ein spezifisches Leistungspaket oder Detail eines Angebots.
-    """
-    
-    offer = models.ForeignKey(Offer,
-        on_delete=models.CASCADE, # <-- Sorgt für automatisches Löschen!
-        related_name='details',     # Zugriff auf Details über offer.details.all()
-        null=True
+    OFFER_TYPE_CHOICES = (
+        ('basic', 'Basic'),
+        ('standard', 'Standard'),
+        ('premium', 'Premium'),
     )
-    title = models.CharField(max_length=100) 
-    revisions = models.PositiveIntegerField(default=0, help_text="Anzahl der erlaubten Revisionen")
-    delivery_time_in_days = models.PositiveIntegerField(default=1, help_text="Lieferzeit in Tagen")
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    features = models.JSONField(default=list, help_text="Liste der enthaltenen Features (Strings)")
-    offer_type = models.CharField(max_length=20, choices=OfferDetailType.choices)
-
+    offer = models.ForeignKey(
+        Offer,
+        on_delete=models.CASCADE,
+        related_name='details',
+        verbose_name=_("Offer")
+    )
+    title = models.CharField(_("Detail Title"), max_length=100)
+    description = models.TextField(_("Detail Description"), blank=True)
+    price = models.DecimalField(_("Price"), max_digits=10, decimal_places=2)
+    delivery_time_in_days = models.IntegerField(_("Delivery Time (days)"))
+    revisions = models.IntegerField(_("Revisions"))
+    features = models.JSONField(_("Features"), default=list)
+    offer_type = models.CharField(
+        _("Offer Type"),
+        max_length=20,
+        choices=OFFER_TYPE_CHOICES,
+        default='basic'
+    )
     def __str__(self):
-        return f"{self.offer_id} for offer {self.title} ({self.offer_type})"
+        return f"{self.offer.title} - {self.title}"
