@@ -134,7 +134,23 @@ CORS_ALLOWED_ORIGINS = [
   	'http://localhost:5500',
 
 	]
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
 
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "origin",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

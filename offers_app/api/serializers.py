@@ -101,7 +101,7 @@ class OfferCreateSerializer(serializers.ModelSerializer):
         return offer
 
 class OfferResponseSerializer(serializers.ModelSerializer):
-     user = OfferListUserDetailsSerializer(source='user', read_only=True)
+     user = OfferListUserDetailsSerializer(read_only=True)
      details = OfferDetailSpecificSerializer(many=True, read_only=True)
      image = serializers.ImageField(read_only=True)
      created_at = serializers.DateTimeField(read_only=True)
