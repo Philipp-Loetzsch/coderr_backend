@@ -4,13 +4,11 @@ from django.utils.translation import gettext_lazy as _
 from offers_app.models import OfferDetail
 
 class Order(models.Model):
-    STATUS_PENDING = 'pending'
     STATUS_IN_PROGRESS = 'in_progress'
     STATUS_COMPLETED = 'completed'
     STATUS_CANCELLED = 'cancelled'
 
     STATUS_CHOICES = (
-        (STATUS_PENDING, _('Pending')),
         (STATUS_IN_PROGRESS, _('In Progress')),
         (STATUS_COMPLETED, _('Completed')),
         (STATUS_CANCELLED, _('Cancelled')),
@@ -32,7 +30,7 @@ class Order(models.Model):
         _("Status"),
         max_length=20,
         choices=STATUS_CHOICES,
-        default=STATUS_PENDING
+        default=STATUS_IN_PROGRESS
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

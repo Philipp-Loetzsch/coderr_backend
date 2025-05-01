@@ -44,7 +44,7 @@ class OrderCreateSerializer(serializers.Serializer):
         order = Order.objects.create(
             customer=customer,
             offer_detail=offer_detail,
-            status=Order.STATUS_PENDING
+            status=Order.STATUS_IN_PROGRESS
         )
         return order
 
