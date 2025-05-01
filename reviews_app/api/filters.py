@@ -7,4 +7,4 @@ class ReviewFilter(filters.FilterSet):
 
     class Meta:
         model = Review
-        fields = ['business_user_id', 'reviewer_id', 'rating'] 
+        fields = ['business_user_id', 'reviewer_id', 'rating']

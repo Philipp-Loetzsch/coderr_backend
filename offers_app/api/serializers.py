@@ -1,13 +1,14 @@
-# offers_app/api/serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import Min
 from ..models import Offer, OfferDetail, Category
 
+
 class OfferListUserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('first_name', 'last_name', 'username')
+        read_only_fields = fields 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,12 +16,13 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name')
 
 class SimpleOfferDetailSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
-    class Meta:
-        model = OfferDetail
-        fields = ('id', 'url')
-    def get_url(self, obj):
-        return f"/offerdetails/{obj.id}/"
+     url = serializers.HyperlinkedIdentityField(
+         view_name='offers_api:offerdetail-detail',
+         lookup_field='id'
+     )
+     class Meta:
+         model = OfferDetail
+         fields = ('id', 'url')
 
 class OfferDetailSpecificSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,6 +30,7 @@ class OfferDetailSpecificSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'title',
+            'description',
             'revisions',
             'delivery_time_in_days',
             'price',
@@ -36,7 +39,7 @@ class OfferDetailSpecificSerializer(serializers.ModelSerializer):
         )
 
 class OfferDetailCreateSerializer(serializers.ModelSerializer):
-    delivery_time_in_days = serializers.IntegerField() 
+    delivery_time_in_days = serializers.IntegerField()
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
     class Meta:
         model = OfferDetail
@@ -55,7 +58,7 @@ class OfferDetailUpdateSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)
     description = serializers.CharField(required=False)
     price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
-    delivery_time_in_days = serializers.IntegerField(required=False) # Uses model field name now
+    delivery_time_in_days = serializers.IntegerField(required=False)
     revisions = serializers.IntegerField(required=False)
     features = serializers.JSONField(required=False)
     offer_type = serializers.ChoiceField(choices=OfferDetail.OFFER_TYPE_CHOICES, required=False)
@@ -67,11 +70,11 @@ class OfferDetailUpdateSerializer(serializers.ModelSerializer):
         )
 
 class OfferListSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    details = SimpleOfferDetailSerializer(many=True, read_only=True)
+    user = serializers.IntegerField(source='user.id', read_only=True)
+    details = SimpleOfferDetailSerializer(many=True, read_only=True) 
     min_price = serializers.SerializerMethodField()
     min_delivery_time = serializers.SerializerMethodField()
-    user_details = OfferListUserDetailsSerializer(source='user', read_only=True)
+    user_details = OfferListUserDetailsSerializer(source='user', read_only=True) 
     image = serializers.ImageField(read_only=True)
     class Meta:
         model = Offer
@@ -101,18 +104,14 @@ class OfferCreateSerializer(serializers.ModelSerializer):
         return offer
 
 class OfferResponseSerializer(serializers.ModelSerializer):
-     user = OfferListUserDetailsSerializer(read_only=True)
-     details = OfferDetailSpecificSerializer(many=True, read_only=True)
+     details = OfferDetailSpecificSerializer(many=True, read_only=True) 
      image = serializers.ImageField(read_only=True)
-     created_at = serializers.DateTimeField(read_only=True)
-     updated_at = serializers.DateTimeField(read_only=True)
      class Meta:
         model = Offer
-        fields = ('id', 'user', 'title', 'image', 'description',
-                  'created_at', 'updated_at', 'details')
+        fields = ('id', 'title', 'image', 'description', 'details')
 
 class OfferRetrieveSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True) 
     details = SimpleOfferDetailSerializer(many=True, read_only=True)
     min_price = serializers.SerializerMethodField()
     min_delivery_time = serializers.SerializerMethodField()
@@ -150,5 +149,5 @@ class OfferUpdateSerializer(serializers.ModelSerializer):
                         instance=detail_instance, data=detail_data, partial=True
                     )
                     if detail_serializer.is_valid(raise_exception=True):
-                         detail_serializer.save()
+                        detail_serializer.save()
         return instance
