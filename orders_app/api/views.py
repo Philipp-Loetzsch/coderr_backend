@@ -11,11 +11,12 @@ from .serializers import (
     OrderUpdateStatusSerializer
 )
 from .permissions import IsCustomerUser, IsOrderParticipant, IsOrderCustomer, IsOrderProvider
-from offers_app.models import OfferDetail
+from offers_app.models import OfferDetail 
 
 CustomUser = get_user_model()
 
 class OrderListCreateView(generics.ListCreateAPIView):
+    """Lists orders relevant to the logged-in user (GET) or creates a new order (POST)."""
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -43,8 +44,8 @@ class OrderListCreateView(generics.ListCreateAPIView):
         headers = self.get_success_headers(response_serializer.data)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieves (GET), updates status (PATCH), or deletes (DELETE) a specific order."""
     queryset = Order.objects.select_related(
         'customer', 'offer_detail', 'offer_detail__offer', 'offer_detail__offer__user'
     ).all()
@@ -74,8 +75,8 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         response_serializer = OrderSerializer(instance, context=self.get_serializer_context())
         return Response(response_serializer.data)
 
-
 class BusinessOrderListView(generics.ListAPIView):
+    """Lists all orders associated with a specific business user (provider)."""
     serializer_class = OrderSerializer
     permission_classes = [AllowAny]
 
@@ -90,6 +91,7 @@ class BusinessOrderListView(generics.ListAPIView):
         )
 
 class CompletedOrdersCountView(views.APIView):
+    """Returns the count of completed orders for a specific business user."""
     permission_classes = [AllowAny]
 
     def get(self, request, business_user_id, *args, **kwargs):
@@ -105,8 +107,8 @@ class CompletedOrdersCountView(views.APIView):
         ).count()
         return Response({'completed_order_count': count}, status=status.HTTP_200_OK)
 
-
 class InProgressOrdersCountView(views.APIView):
+    """Returns the count of 'in_progress' orders for a specific business user."""
     permission_classes = [AllowAny]
 
     def get(self, request, business_user_id, *args, **kwargs):

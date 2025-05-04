@@ -1,4 +1,3 @@
-# offers_app/api/permissions.py
 from rest_framework import permissions
 
 class IsBusinessUser(permissions.BasePermission):

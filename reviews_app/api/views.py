@@ -14,6 +14,7 @@ from .permissions import IsCustomerUser, IsReviewOwner
 from .filters import ReviewFilter
 
 class ReviewListCreateView(generics.ListCreateAPIView):
+    """Lists reviews (GET, with filtering/ordering) or creates a new review (POST)."""
     queryset = Review.objects.select_related('reviewer', 'reviewed_user').all()
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = ReviewFilter
@@ -37,8 +38,8 @@ class ReviewListCreateView(generics.ListCreateAPIView):
         headers = self.get_success_headers(response_serializer.data)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-
 class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieves (GET), updates (PATCH), or deletes (DELETE) a specific review."""
     queryset = Review.objects.select_related('reviewer', 'reviewed_user').all()
     lookup_field = 'id'
 

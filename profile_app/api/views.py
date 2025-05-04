@@ -6,27 +6,18 @@ from .serializers import (
     CustomerProfileListSerializer,
     BusinessProfileListSerializer
 )
-try:
-    from .permissions import IsOwnerOrReadOnly
-except ImportError:
-    from ..api.permissions import IsOwnerOrReadOnly
-
+from .permissions import IsOwnerOrReadOnly
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
-    """
-    API View zum Abrufen und Aktualisieren des eigenen Profils.
-    Verwendet jetzt ExactProfileSerializer.
-    """
+    """Retrieves (GET) or updates (PATCH) the profile of a specific user (identified by user PK)."""
     queryset = Profile.objects.select_related('user').all()
-    serializer_class = ExactProfileSerializer 
+    serializer_class = ExactProfileSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     lookup_field = 'user__pk'
     lookup_url_kwarg = 'pk'
 
 class CustomerProfileListView(generics.ListAPIView):
-    """
-    API View zum Auflisten aller Kundenprofile ('customer').
-    """
+    """Lists all profiles where the user type is 'customer'."""
     serializer_class = CustomerProfileListSerializer
     permission_classes = [IsAuthenticated]
 
@@ -34,9 +25,7 @@ class CustomerProfileListView(generics.ListAPIView):
         return Profile.objects.select_related('user').filter(user__type='customer')
 
 class BusinessProfileListView(generics.ListAPIView):
-    """
-    API View zum Auflisten aller Geschäftsprofile ('business').
-    """
+    """Lists all profiles where the user type is 'business'."""
     serializer_class = BusinessProfileListSerializer
     permission_classes = [IsAuthenticated]
 

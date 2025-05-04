@@ -1,9 +1,9 @@
-# offers_app/api/views.py
 from rest_framework import generics, filters, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Min
 
 from ..models import Offer, OfferDetail
 from .serializers import (
@@ -18,17 +18,34 @@ from .permissions import IsBusinessUser, IsOfferOwner
 from .filters import OfferFilter
 
 class StandardResultsSetPagination(PageNumberPagination):
+    """Standard pagination configuration for offer lists."""
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
 
 class OfferListCreateView(generics.ListCreateAPIView):
-    queryset = Offer.objects.select_related('user').prefetch_related('details').all()
+    """Lists offers (GET, with filtering/search/ordering) or creates a new offer (POST)."""
+    serializer_class = OfferListSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = OfferFilter
-    search_fields = ['title', 'description', 'user__username', 'details__title']
-    ordering_fields = ['created_at', 'details__price', 'details__delivery_time_in_days'] # Angepasst
+    search_fields = ['title', 'description']
+    ordering_fields = ['updated_at', 'min_price']
+    ordering = ['-updated_at']
     pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        """
+        Overrides the default queryset to annotate min_price
+        and apply distinct().
+        """
+        queryset = Offer.objects.select_related(
+            'user', 'category'
+        ).prefetch_related(
+            'details'
+        ).annotate(
+            min_price=Min('details__price')
+        ).distinct()
+        return queryset
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -55,7 +72,8 @@ class OfferListCreateView(generics.ListCreateAPIView):
 
 
 class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Offer.objects.select_related('user').prefetch_related('details').all()
+    """Retrieves (GET), updates (PATCH), or deletes (DELETE) a specific offer."""
+    queryset = Offer.objects.select_related('user', 'category').prefetch_related('details').all()
     lookup_field = 'id'
 
     def get_serializer_class(self):
@@ -84,7 +102,9 @@ class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class OfferDetailSpecificView(generics.RetrieveAPIView):
+    """Retrieves details for a specific OfferDetail item."""
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSpecificSerializer
     permission_classes = [AllowAny]
     lookup_field = 'id'
+
