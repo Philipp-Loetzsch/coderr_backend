@@ -30,7 +30,6 @@ class OfferDetailSpecificSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'title',
-            'description',
             'revisions',
             'delivery_time_in_days',
             'price',
@@ -45,7 +44,6 @@ class OfferDetailCreateSerializer(serializers.ModelSerializer):
         model = OfferDetail
         fields = (
             'title',
-            'description',
             'price',
             'delivery_time_in_days',
             'revisions',
@@ -56,7 +54,7 @@ class OfferDetailCreateSerializer(serializers.ModelSerializer):
 class OfferDetailUpdateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     title = serializers.CharField(required=False)
-    description = serializers.CharField(required=False)
+    # description = serializers.CharField(required=False)
     price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     delivery_time_in_days = serializers.IntegerField(required=False)
     revisions = serializers.IntegerField(required=False)
@@ -65,7 +63,7 @@ class OfferDetailUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = OfferDetail
         fields = (
-            'id', 'title', 'description', 'price', 'delivery_time_in_days',
+            'id', 'title', 'price', 'delivery_time_in_days',
             'revisions', 'features', 'offer_type'
         )
 
@@ -132,12 +130,16 @@ class OfferRetrieveSerializer(serializers.ModelSerializer):
 class OfferUpdateSerializer(serializers.ModelSerializer):
     details = OfferDetailUpdateSerializer(many=True, required=False)
     title = serializers.CharField(required=False)
+    image = serializers.ImageField(required=False, allow_null=True)
     class Meta:
         model = Offer
-        fields = ('title', 'details')
+        fields = ('title', 'image','details')
     def update(self, instance, validated_data):
         details_data = validated_data.pop('details', None)
         instance.title = validated_data.get('title', instance.title)
+        if 'image' in validated_data:
+            instance.image = validated_data.get('image', instance.image)
+        
         instance.save()
         if details_data is not None:
             detail_mapping = {detail.id: detail for detail in instance.details.all()}
@@ -150,4 +152,5 @@ class OfferUpdateSerializer(serializers.ModelSerializer):
                     )
                     if detail_serializer.is_valid(raise_exception=True):
                         detail_serializer.save()
+        instance = super().update(instance, validated_data)
         return instance

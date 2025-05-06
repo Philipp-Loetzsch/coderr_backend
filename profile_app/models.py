@@ -3,10 +3,10 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+import os 
 class Profile(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, 
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='profile',
         verbose_name=_("User")
@@ -23,25 +23,50 @@ class Profile(models.Model):
     tel = models.CharField(_("Telephone"), max_length=20, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    __original_profile_picture = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_profile_picture = self.profile_picture.name if self.profile_picture else None
+
+    def save(self, *args, **kwargs):
+        new_picture_name = self.profile_picture.name if self.profile_picture else None
+        if self.pk and new_picture_name != self.__original_profile_picture:
+            if self.__original_profile_picture:
+                old_picture_path = os.path.join(settings.MEDIA_ROOT, self.__original_profile_picture)
+                if os.path.isfile(old_picture_path):
+                    try:
+                        os.remove(old_picture_path)
+                    except OSError as e:
+                        print(f"Error deleting old profile picture {old_picture_path}: {e}")
+
+        super().save(*args, **kwargs)
+        self.__original_profile_picture = self.profile_picture.name if self.profile_picture else None
+
+    def delete(self, *args, **kwargs):
+        if self.profile_picture:
+            picture_path = os.path.join(settings.MEDIA_ROOT, self.profile_picture.name)
+            if os.path.isfile(picture_path):
+                try:
+                    os.remove(picture_path)
+                except OSError as e:
+                    print(f"Error deleting profile picture {picture_path}: {e}")
+        super().delete(*args, **kwargs)
+
     def __str__(self):
         return f"Profile of {self.user.username}"
+
+
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_user_profile(sender, instance, created, **kwargs):
+def create_or_update_user_profile(sender, instance, created, **kwargs):
     """
-    Erstellt automatisch ein Profil, wenn ein neuer Benutzer erstellt wird.
+    Erstellt oder aktualisiert das Profil, wenn ein User-Objekt gespeichert wird.
     """
     if created:
         Profile.objects.create(user=instance)
+    else:
+        try:
+            instance.profile.save()
+        except Profile.DoesNotExist:
+            Profile.objects.create(user=instance)
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def save_user_profile(sender, instance, **kwargs):
-    """
-    Speichert das Profil, wenn der Benutzer gespeichert wird
-    (falls das Profil-Modell direkt User-Felder bearbeiten könnte -
-     aktuell nicht der Fall, aber schadet nicht).
-    Stellt sicher, dass das Profil existiert.
-    """
-    try:
-        instance.profile.save()
-    except Profile.DoesNotExist:
-        Profile.objects.create(user=instance)

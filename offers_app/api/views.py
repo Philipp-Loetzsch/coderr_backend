@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Min
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from ..models import Offer, OfferDetail
 from .serializers import (
@@ -19,9 +20,9 @@ from .filters import OfferFilter
 
 class StandardResultsSetPagination(PageNumberPagination):
     """Standard pagination configuration for offer lists."""
-    page_size = 10
+    page_size = 6
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 6
 
 class OfferListCreateView(generics.ListCreateAPIView):
     """Lists offers (GET, with filtering/search/ordering) or creates a new offer (POST)."""
@@ -32,6 +33,7 @@ class OfferListCreateView(generics.ListCreateAPIView):
     ordering_fields = ['updated_at', 'min_price']
     ordering = ['-updated_at']
     pagination_class = StandardResultsSetPagination
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         """
@@ -75,7 +77,8 @@ class OfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieves (GET), updates (PATCH), or deletes (DELETE) a specific offer."""
     queryset = Offer.objects.select_related('user', 'category').prefetch_related('details').all()
     lookup_field = 'id'
-
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+     
     def get_serializer_class(self):
         if self.request.method == 'PATCH' or self.request.method == 'PUT':
             return OfferUpdateSerializer
