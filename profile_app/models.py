@@ -5,6 +5,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 import os 
 class Profile(models.Model):
+    """
+    Represents a user's profile, extending the base User model with
+    additional information like a profile picture, location, and other details.
+    It also handles the deletion of associated image files when the
+    profile picture is changed or the profile is deleted.
+    """
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -60,7 +66,8 @@ class Profile(models.Model):
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     """
-    Erstellt oder aktualisiert das Profil, wenn ein User-Objekt gespeichert wird.
+    Signal receiver to create a Profile when a new User is created,
+    and to ensure the Profile is saved when an existing User is saved.
     """
     if created:
         Profile.objects.create(user=instance)

@@ -1,17 +1,22 @@
 from rest_framework import permissions
 
+
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
-    Erlaubt Lesezugriff für jeden, aber Schreibzugriff nur für den Profilbesitzer.
+    Allows read access for everyone, but write access only for the profile owner.
     """
+
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj.user == request.user
+
+
 class IsOwner(permissions.BasePermission):
-     """
-     Erlaubt Zugriff nur für den Besitzer des Objekts.
-     Annahme: Das Objekt hat ein `user`-Feld.
-     """
-     def has_object_permission(self, request, view, obj):
-         return obj.user == request.user
+    """
+    Allows access only for the owner of the object.
+    Assumption: The object has a user field.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return obj.user == request.user

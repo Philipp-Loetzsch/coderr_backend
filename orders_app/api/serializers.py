@@ -4,11 +4,16 @@ from django.contrib.auth import get_user_model
 from ..models import Order
 from offers_app.models import OfferDetail
 from offers_app.api.serializers import OfferDetailSpecificSerializer as NestedOfferDetailSerializer
-from user_auth_app.api.serializers import UserDetailsSerializer as NestedCustomerSerializer # Assuming UserDetailsSerializer provides needed fields
+from user_auth_app.api.serializers import UserDetailsSerializer as NestedCustomerSerializer
 
 CustomUser = get_user_model()
 
 class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for representing Order instances with a flat structure.
+    Used for list views, detail views, and responses after create/update.
+    Includes customer ID, business user ID (provider), and flattened offer detail fields.
+    """
     customer_user = serializers.IntegerField(source='customer.id', read_only=True)
     business_user = serializers.SerializerMethodField()
     title = serializers.CharField(source='offer_detail.title', read_only=True)
@@ -27,18 +32,31 @@ class OrderSerializer(serializers.ModelSerializer):
         )
 
     def get_business_user(self, obj):
+        """
+        Retrieves the ID of the business user (provider) associated with the order's offer detail.
+        Returns None if the related objects are not found.
+        """
         try:
             return obj.offer_detail.offer.user.id
         except AttributeError:
             return None
 
 class OrderCreateSerializer(serializers.Serializer):
+    """
+    Serializer for creating a new Order.
+    Expects 'offer_detail_id' in the request data.
+    The 'customer' is automatically set to the requesting user.
+    The initial 'status' is set to 'pending' (or as defined in the model).
+    """
     offer_detail_id = serializers.PrimaryKeyRelatedField(
         queryset=OfferDetail.objects.all(),
         write_only=True
     )
 
     def create(self, validated_data):
+        """
+        Creates and returns a new Order instance.
+        """
         offer_detail = validated_data['offer_detail_id']
         customer = self.context['request'].user
         order = Order.objects.create(
@@ -49,6 +67,9 @@ class OrderCreateSerializer(serializers.Serializer):
         return order
 
 class OrderUpdateStatusSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating only the 'status' of an existing Order.
+    """
     class Meta:
         model = Order
         fields = ('status',)

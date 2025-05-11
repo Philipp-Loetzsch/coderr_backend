@@ -1,16 +1,33 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-import os 
+import os
+
 class Category(models.Model):
+    """
+    Represents a category to which offers can belong.
+    """
     name = models.CharField(_("Name"), max_length=100, unique=True)
+
     class Meta:
         verbose_name = _("Category")
         verbose_name_plural = _("Categories")
+
     def __str__(self):
+        """
+        Returns the string representation of the category.
+        """
         return self.name
 
+
 class Offer(models.Model):
+    """
+    Represents a service offer created by a business user.
+    Includes details like title, description, an optional image,
+    and links to the user and category.
+    Handles deletion of associated image files when the image is changed
+    or the offer is deleted.
+    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -36,9 +53,9 @@ class Offer(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     __original_image = None
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__original_image = self.image.name if self.image else None
@@ -50,7 +67,7 @@ class Offer(models.Model):
                 old_image_path = os.path.join(settings.MEDIA_ROOT, self.__original_image)
                 if os.path.isfile(old_image_path):
                     os.remove(old_image_path)
-        
+
         super().save(*args, **kwargs)
         self.__original_image = self.image.name if self.image else None
 
@@ -60,17 +77,21 @@ class Offer(models.Model):
             if os.path.isfile(image_path):
                 os.remove(image_path)
         super().delete(*args, **kwargs)
-    
-    
+
     def __str__(self):
         return self.title
 
+
 class OfferDetail(models.Model):
+    """
+    Represents a detailed version (basic, standard, or premium) of an offer, with its own pricing and features.
+    """
     OFFER_TYPE_CHOICES = (
         ('basic', 'Basic'),
         ('standard', 'Standard'),
         ('premium', 'Premium'),
     )
+
     offer = models.ForeignKey(
         Offer,
         on_delete=models.CASCADE,
@@ -88,5 +109,6 @@ class OfferDetail(models.Model):
         choices=OFFER_TYPE_CHOICES,
         default='basic'
     )
+
     def __str__(self):
         return f"{self.offer.title} - {self.title}"

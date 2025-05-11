@@ -4,6 +4,11 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Review(models.Model):
+    """
+    Represents a review given by a 'customer' user to a 'business' user.
+    Includes a rating, an optional comment, and timestamps.
+    Ensures that a reviewer can only review a specific business user once.
+    """
     reviewer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

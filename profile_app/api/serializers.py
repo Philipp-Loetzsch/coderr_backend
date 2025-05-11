@@ -5,6 +5,11 @@ from ..models import Profile
 CustomUser = get_user_model()
 
 class ExactProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for detailed profile view and update.
+    Handles fields from both the Profile model and the related User model.
+    Allows updating user's first_name, last_name, and email alongside profile fields.
+    """
     user = serializers.IntegerField(source='user.id', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
     first_name = serializers.CharField(source='user.first_name', required=False, allow_blank=True, max_length=150)
@@ -50,6 +55,10 @@ class ExactProfileSerializer(serializers.ModelSerializer):
         return instance
 
 class BaseProfileListSerializer(serializers.ModelSerializer):
+    """
+    Base serializer for profile list views, providing common user and profile information.
+    Designed to be inherited by more specific list serializers.
+    """
     user = serializers.IntegerField(source='user.id', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
     first_name = serializers.CharField(source='user.first_name', read_only=True)
@@ -64,12 +73,19 @@ class BaseProfileListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 class CustomerProfileListSerializer(BaseProfileListSerializer):
+    """
+    Serializer for listing customer profiles. Inherits from BaseProfileListSerializer.
+    """
     class Meta(BaseProfileListSerializer.Meta):
           fields = ('user', 'username', 'first_name', 'last_name', 'file', 'uploaded_at', 'type')
           read_only_fields = fields
 
 
 class BusinessProfileListSerializer(BaseProfileListSerializer):
+    """
+    Serializer for listing business profiles. Inherits from BaseProfileListSerializer
+    and adds business-specific fields.
+    """
     uploaded_at = None
     location = serializers.CharField(max_length=100, read_only=True)
     tel = serializers.CharField(max_length=20, read_only=True)
