@@ -56,11 +56,9 @@ const GUEST_LOGINS = {
 ### 1. Clone the repository
 
 ```bash
-git clone <(https://github.com/Philipp-Loetzsch/coderr_backend)>
+git clone (https://github.com/Philipp-Loetzsch/coderr_backend)
 cd coderr_backend
 ```
-
-> Replace `(https://github.com/Philipp-Loetzsch/coderr_backend)` with the actual URL of your repository.
 
 ### 2. Create and activate a virtual environment
 
