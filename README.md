@@ -3,11 +3,25 @@
 This is the backend API service for the **Coderr** platform, built with Django and Django REST Framework.  
 It handles user authentication, profiles, service offers, orders, reviews, and provides base platform statistics.
 
+## !! INFORMATION FOR GUESTLOGIN !!
+
+const GUEST_LOGINS = {
+    customer : {
+        username: 'CustomerTester',
+        password: 'asdasd'
+    },
+    business : {
+        username: 'BusinessTester',
+        password: 'asdasd'
+    }
+}
+
 ---
 
 ## 📚 Table of Contents
 
 - [Coderr Backend API](#coderr-backend-api)
+  - [!! INFORMATION FOR GUESTLOGIN !!](#-information-for-guestlogin-)
   - [📚 Table of Contents](#-table-of-contents)
   - [🛠️ Prerequisites](#️-prerequisites)
   - [⚙️ Setup and Installation](#️-setup-and-installation)
@@ -42,11 +56,11 @@ It handles user authentication, profiles, service offers, orders, reviews, and p
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repository-url>
+git clone <(https://github.com/Philipp-Loetzsch/coderr_backend)>
 cd coderr_backend
 ```
 
-> Replace `<your-repository-url>` with the actual URL of your repository.
+> Replace `(https://github.com/Philipp-Loetzsch/coderr_backend)` with the actual URL of your repository.
 
 ### 2. Create and activate a virtual environment
 
