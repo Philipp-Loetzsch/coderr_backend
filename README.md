@@ -69,6 +69,10 @@ Ensure your `requirements.txt` file includes:
 - `djangorestframework`
 - `django-cors-headers`
 - `django-filter`
+- `pillow`
+- `sqlpars`
+- `tzdata`
+
 
 ```bash
 pip install -r requirements.txt
