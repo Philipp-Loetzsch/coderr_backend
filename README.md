@@ -4,17 +4,18 @@ This is the backend API service for the **Coderr** platform, built with Django a
 It handles user authentication, profiles, service offers, orders, reviews, and provides base platform statistics.
 
 ## !! INFORMATION FOR GUESTLOGIN !!
-
-const GUEST_LOGINS = {
-    customer : {
+```hmtl
+const GUEST_LOGINS = {  
+   customer : {
         username: 'CustomerTester',
         password: 'asdasd'
     },
-    business : {
+    business : {  
         username: 'BusinessTester',
         password: 'asdasd'
     }
 }
+```
 
 ---
 
