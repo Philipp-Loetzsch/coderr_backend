@@ -56,7 +56,7 @@ const GUEST_LOGINS = {
 ### 1. Clone the repository
 
 ```bash
-git clone (https://github.com/Philipp-Loetzsch/coderr_backend)
+git clone https://github.com/Philipp-Loetzsch/coderr_backend
 cd coderr_backend
 ```
 
