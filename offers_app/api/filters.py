@@ -1,7 +1,6 @@
 from django_filters import rest_framework as filters
-from rest_framework.filters import BaseFilterBackend # Ensure this is imported
+from rest_framework.filters import BaseFilterBackend
 from ..models import Offer
-# from django.db.models import Min # Not strictly needed here if view handles annotation
 
 class OfferFilter(filters.FilterSet):
     """
@@ -44,10 +43,8 @@ class CustomOfferOrderingFilter(BaseFilterBackend):
             orderings = [param.strip() for param in ordering_param_value.split(',')]
             for field in orderings:
                 if field == 'min_price':
-                    # Sort by the lowest minimum price first (ascending)
                     final_ordering_fields.append('min_price_annotated')
                 elif field == '-min_price':
-                    # Sort by the highest minimum price first (descending on min_price_annotated)
                     final_ordering_fields.append('-min_price_annotated')
                 elif field == 'updated_at':
                     final_ordering_fields.append('updated_at')
