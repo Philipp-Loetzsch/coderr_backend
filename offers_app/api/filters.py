@@ -12,15 +12,15 @@ class OfferFilter(filters.FilterSet):
     """
     category_id = filters.NumberFilter(field_name='category__id')
     creator_id = filters.NumberFilter(field_name='user__id')
-    min_offer_price = filters.NumberFilter(field_name='details__price', lookup_expr='gte')
-    max_offer_price = filters.NumberFilter(field_name='details__price', lookup_expr='lte')
+    min_price = filters.NumberFilter(method='filter_by_annotated_min_price')
     max_delivery_time = filters.NumberFilter(field_name='details__delivery_time_in_days', lookup_expr='lte')
 
     class Meta:
         model = Offer
-        fields = ['creator_id', 'category_id']
-
-
+        fields = ['creator_id', 'category_id', 'max_delivery_time']
+        
+    def filter_by_annotated_min_price(self, queryset, name, value):
+         return queryset.filter(min_price_annotated__lte=value)
 class CustomOfferOrderingFilter(BaseFilterBackend):
     """
     Custom ordering filter to handle 'min_price' and '-min_price' parameters
@@ -62,3 +62,4 @@ class CustomOfferOrderingFilter(BaseFilterBackend):
             return queryset.order_by(*final_ordering_fields)
 
         return queryset
+

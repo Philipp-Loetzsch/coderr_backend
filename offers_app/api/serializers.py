@@ -175,7 +175,7 @@ class OfferRetrieveSerializer(serializers.ModelSerializer):
         model = Offer
         fields = (
             'id', 'user', 'title', 'image', 'description', 'category', 'created_at', 'updated_at',
-            'details', 'min_price', 'min_delivery_time'
+            'details', 'min_price', 'min_delivery_time',
         )
 
     def get_min_price(self, obj):
